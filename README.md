@@ -24,7 +24,7 @@ with a simulated delay using a sleep function. Duration of the sleep could be de
 
 ## Presentation 
 
-Once you've wrapped up the project, be sure to push it to a GitHub repository for presentation. Remember to extend invitations to @hollyos, @justinwoo and @alexbiehl 
+Once you've wrapped up the project, be sure to push it to a GitHub repository for presentation. Remember to extend invitations to @hollyos, @justinwoo, @ken-scarf and @alexbiehl 
 to collaborate on the repository.
 
 ## Guideline 
