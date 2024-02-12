@@ -4,14 +4,14 @@
 
 This repo contains a basic async job queue.
 
-Using the Task API, users can define "tasks" that they want to be executed. Via the application driver, users send requests to do some work like:
-* Having their user-defined tasks or default tasks executed by the executor
+Using the Task API, users can define "tasks" that they want to be executed. User requests are sent to the executor via the driver. Supported requests include:
+* Executing user-defined tasks or default tasks
 * Cancelling a currently queued/running task
-* Polling to see the current state of a currently queued/running task (in-progress, completed, cancelled)
+* Polling to see the current state of a queued/running task (in-progress, completed, cancelled)
 
-The driver interfaces with an executor by which sends messages over STDIN. The executor schedules and tracks work, and issues responses over STDOUT. The executor works by kicking off two concurrent threads - a request-handler thread and a execution-handler thread.
+The driver interfaces with an executor by sending messages over STDIN. The executor schedules and tracks work, and issues responses over STDOUT. The executor works by kicking off two concurrent threads - a request-handler thread and a execution-handler thread.
 
-Driver messages are interpreted into "requests". Requests that can be translated into tasks are pushed onto a task queue and picked up execution by a seperate executor thread. All others (shutdown, cancel, execution status check, invalid task, etc) are fulfilled directly by request handling thread as they don't involve the task queue.
+Driver messages are interpreted into "requests". Requests that can be translated into tasks are pushed onto a task queue and picked up for execution by a separate executor thread. All others (shutdown, cancel, execution status check, invalid task, etc.) are fulfilled directly by the request-handling thread as they don't involve the task queue.
 
 The execution-handling thread maintains an "execution store" that tracks all task executions (past and present) with an unique task identifier. Users can use these identifiers to issues status check and cancellation requests.
 
