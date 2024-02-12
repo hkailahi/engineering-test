@@ -1,0 +1,43 @@
+cabal-version:      3.4
+name:               engineering-test
+version:            0.1.0.0
+synopsis:           Async Job Queue Takehome Project
+author:             Heneli Kailahi
+maintainer:         foobarbaz@example.com
+build-type:         Simple
+
+common warnings
+    ghc-options: -Wall -threaded
+
+library
+    import:           warnings
+    exposed-modules:  MyLib
+    -- other-modules:
+    -- other-extensions:
+    build-depends:    base ^>=4.17.2.1
+    hs-source-dirs:   src
+    default-language: GHC2021
+
+executable engineering-test
+    import:           warnings
+    main-is:          Main.hs
+    -- other-modules:
+    -- other-extensions:
+    build-depends:
+        base ^>=4.17.2.1,
+        engineering-test
+
+    hs-source-dirs:   app
+    default-language: GHC2021
+
+test-suite engineering-test-test
+    import:           warnings
+    default-language: GHC2021
+    -- other-modules:
+    -- other-extensions:
+    type:             exitcode-stdio-1.0
+    hs-source-dirs:   test
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.17.2.1,
+        engineering-test
