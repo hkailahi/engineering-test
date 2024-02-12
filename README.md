@@ -1,38 +1,75 @@
-# Engineering take home assignment
+# Async Job Queue Application
 
 ## Overview
 
-Your objective is to create a concurrent task executor that interfaces with a driver for task execution. The executor and driver continously exchange messages 
-according to a to-be-developed protocol with the goal to get tasks communicated from the driver to the executor. You can assume the driver is a server
-process running on a different machine, scheduling tasks on many executors. The tasks sent to the executor will vary across a spectrum of business cases and 
-demand specific input parameters for each task. To optimize resource utilization, the executor must have the capability to execute multiple tasks simultaneously.
+This repo contains a basic async job queue.
 
-As the lead engineer you have the liberty to design the communication protocol between the driver and the executor with the following requirements:
+Using the Task API, users can define "tasks" that they want to be executed. Via the application driver, users send requests to do some work like:
+* Having their user-defined tasks or default tasks executed by the executor
+* Cancelling a currently queued/running task
+* Polling to see the current state of a currently queued/running task (in-progress, completed, cancelled)
 
-* An executor is a server process that continously exchanges messages with the driver.
-* Executor and driver communicate over STDIN and STDOUT channels for simplicity.
-* An executor should have a maximum amount of tasks it can execute concurrently.
-* Each task carries a unique identifier, the task type, and input parameters, depending on the type of task.
-* Upon task completion, the executor will promptly notify the driver of the task result, which may include success or failure status, along with any 
-  task-specific result value generated.
-* For long-running tasks, the executor will periodically send status updates to the driver, ensuring transparency in task progress.
-* The driver reserves the right to request task cancellation mid-execution, adding flexibility to task management.
-* Cancellation or failure of one task shoudn't influence other tasks running concurrently.
+The driver interfaces with an executor by which sends messages over STDIN. The executor schedules and tracks work, and issues responses over STDOUT. The executor works by kicking off two concurrent threads - a request-handler thread and a execution-handler thread.
 
-For this assignment's purposes, you may employ task types like "Bubble Bath Optimization," "Squirrel Patrol," and "Unicorn Wrangling," each executed 
-with a simulated delay using a sleep function. Duration of the sleep could be denoted as per-task input parameter. 
+Driver messages are interpreted into "requests". Requests that can be translated into tasks are pushed onto a task queue and picked up execution by a seperate executor thread. All others (shutdown, cancel, execution status check, invalid task, etc) are fulfilled directly by request handling thread as they don't involve the task queue.
 
-## Presentation 
+The execution-handling thread maintains an "execution store" that tracks all task executions (past and present) with an unique task identifier. Users can use these identifiers to issues status check and cancellation requests.
 
-Once you've wrapped up the project, be sure to push it to a GitHub repository for presentation. Remember to extend invitations to @hollyos, @justinwoo, @ken-scarf and @alexbiehl 
-to collaborate on the repository.
+### Architecture
 
-## Guideline 
+Below is a pseudocode representation of this application and its async job queue.
 
-* Allocate a maximum of 1.5 hours to this task. While delivering a fully polished assignment is appreciated, it's not mandatory for progressing to the next round.
+It forks one worker thread to gets user requests, parses reqs into tasks, put tasks on the queue,
+  and forks a second worker thread to pick up tasks off the queue for execution.
 
-* Embrace pragmatism. Taking shortcuts is not only acceptable but necessary. 
+```hs
+type ExecutionStore = Map TaskId (Async ())
+type TaskQueue = TMQueue Task -- https://hackage.haskell.org/package/stm-chans-3.0.0.9/docs/Control-Concurrent-STM-TMQueue.html
 
-* Document and be able to discuss your decisions. We value communication over code.
+-- | Responds to user requests from driver.
+--
+-- Recieves requests, executes unqueueable request types, and populates task queue.
+requestTasks' :: TaskQueue -> IO ()
+requestTasks' queue =
+  fix $ \loop -> do
+    req <- getRequest -- Close task queue if issued "shutdown" request
+    task <- parseTask req
+    enqueueTask task queue
+    loop
 
-* Feel free to utilize any library available on Hackage to bolster your implementation.
+-- | Executes tasks.
+--
+--  Consumes task queue, invokes executions, and tracks executions by populating the execution store
+doTasks' :: TaskQueue -> ExecutionStore -> IO ()
+doTasks' queue store =
+  fix $ \loop -> do
+    unlessM (atomically $ isClosedTBMQueue queue) do
+      atomically (readTBMQueue queue) >>= \case
+        Nothing -> do
+          loop
+        Just task -> do
+          liftIO $ withAsync (execTask task) \runner -> do
+            executions <- atomically $ readTMVar store
+            atomically . writeTMVar store $! Map.insert (taskId task) runner executions
+            waitCatch runner >>= \case
+               Left _ -> reportTaskCancelled
+               Right _ -> reportTaskCompleted
+            loop
+
+main :: IO ()
+main = do
+  queue <- newTBMQueueIO
+  store <- newTMVarIO mempty
+  concurrently_ (requestTasks' queue) (doTasks' queue store)
+```
+
+
+## Docs
+
+See [docs](./docs) folder for
+* [`assignement.md`](./docs/assignment.md)
+  * Assignment (original scarf-sh/README.md)
+* [`notes.md`](./docs/assignment.md)
+  * notes, brainstorms, assumptions, tradeoffs, bugs, etc
+* [`instructions.md`](./docs/instructions.md)
+  * How-To-Run `engineering-test` guide and initial project setup I used
