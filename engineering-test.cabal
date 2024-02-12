@@ -7,37 +7,61 @@ maintainer:         foobarbaz@example.com
 build-type:         Simple
 
 common warnings
-    ghc-options: -Wall -threaded
+    ghc-options:
+        -Wall
+        -threaded
 
 library
     import:           warnings
-    exposed-modules:  MyLib
+    exposed-modules:
+        App,
+        Processor.Execution,
+        Processor.Request,
+        Processor.Task,
+        Scheduler,
+        Settings,
+        Types
+    -- Modules included in this library but not exported.
     -- other-modules:
+    -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    build-depends:    base ^>=4.17.2.1
     hs-source-dirs:   src
     default-language: GHC2021
+    build-depends:
+        base ^>=4.17.2.1,
+        lens,
+        optparse-generic,
+        relude,
+        stm-chans,
+        unliftio,
+        uuid,
 
 executable engineering-test
     import:           warnings
     main-is:          Main.hs
+    -- Modules included in this executable, other than Main.
     -- other-modules:
+    -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    build-depends:
-        base ^>=4.17.2.1,
-        engineering-test
-
     hs-source-dirs:   app
     default-language: GHC2021
+    build-depends:
+        base ^>=4.17.2.1,
+        engineering-test,
+        relude
 
 test-suite engineering-test-test
+    -- Import common warning flags.
     import:           warnings
     default-language: GHC2021
+    -- Modules included in this executable, other than Main.
     -- other-modules:
+    -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
     type:             exitcode-stdio-1.0
     hs-source-dirs:   test
     main-is:          Main.hs
     build-depends:
         base ^>=4.17.2.1,
-        engineering-test
+        engineering-test,
+        relude
