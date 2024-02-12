@@ -4,9 +4,6 @@
 
 module App where
 
-import Control.Concurrent.STM.TBMQueue (closeTBMQueue)
-import Control.Lens (view)
-import GHC.IO.Handle (hClose)
 import Options.Generic
   ( getRecord,
     unHelpful,
@@ -20,10 +17,8 @@ import Scheduler (doTasks, requestTasks)
 import Settings
   ( ExecCfg (ExecCfg),
     ExecOpts (limit),
-    HasExecCfg (execCfgTaskQueue),
   )
 import UnliftIO.Async (concurrently_)
-import UnliftIO.Exception (finally)
 
 initSettings :: IO ExecCfg
 initSettings = do
@@ -38,7 +33,7 @@ initSettings = do
 
 runApp' :: ExecCfg -> IO ()
 runApp' cfg =
-  flip runReaderT cfg . concurrently_ requestTasks doTasks
+  flip runReaderT cfg $ concurrently_ requestTasks doTasks
 
 runApp :: IO ()
 runApp = do
