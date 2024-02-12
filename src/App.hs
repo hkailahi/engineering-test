@@ -31,20 +31,14 @@ initSettings = do
 
   let maxConcurrentTasks = unHelpful $ limit opts
 
-  taskQueue <- newTaskQueue maxConcurrentTasks -- FIXME Stop using TBMQueue and handle max concurrent with unbounded queue
+  taskQueue <- newTaskQueue maxConcurrentTasks
   execStore <- newExecutionStore
 
   pure $ ExecCfg taskQueue execStore maxConcurrentTasks
 
 runApp' :: ExecCfg -> IO ()
 runApp' cfg =
-  flip runReaderT cfg
-    $ concurrently_ requestTasks doTasks
-    `finally` do
-      liftIO do
-        hClose stdin
-        hClose stdout
-      atomically . closeTBMQueue $ view execCfgTaskQueue cfg
+  flip runReaderT cfg . concurrently_ requestTasks doTasks
 
 runApp :: IO ()
 runApp = do
