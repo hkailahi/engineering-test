@@ -1,6 +1,6 @@
 # Instructions
 
-While I used nix flakes via [`devenv`](https://devenv.sh/) to setup HLS, but the project can be built with plain `cabal`.
+While I used nix flakes via [`devenv`](https://devenv.sh/) to setup HLS, this project can be built with plain `cabal`.
 
 ## Using `engineering-test`
 
