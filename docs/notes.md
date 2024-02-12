@@ -54,3 +54,8 @@ need all of the above? That's what we needed at TVision for `ingest-tracker` whi
    2. Stop using `getLine`
    3. Stream stdin/stdout with resource-handling patterns (via conduit & resourcet)
 2. Address unhandled edge cases pointed out in FIXMEs and TODOs
+3. Missing functionality I ran out of time to implement
+   1. > Upon task completion, the executor will promptly notify the driver of ... any task-specific result value generated.
+      1. Right now result values beyond status are thrown into the `void`, but it should be straightforward to bubble up result value
+   2. > For long-running tasks, the executor will periodically send status updates to the driver, ensuring transparency in task progress.
+      1. I have ideas for different ways of doing this, but I didn't get around to implementing them
